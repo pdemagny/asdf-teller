@@ -12,12 +12,32 @@ fail() {
 }
 
 get_os() {
+	os=$(uname -s)
+	case $os in
+	Darwin) os="macos" ;;
+	Linux) os="linux" ;;
+	*) fail "The os (${os}) is not supported by this installation script." ;;
+	esac
+	echo "$os"
+}
+
+get_arch() {
+	arch=$(uname -m)
+	case $arch in
+	x86_64) arch="x86_64" ;;
+	arm64) arch="aarch64" ;;
+	*) fail "The architecture (${arch}) is not supported by this installation script." ;;
+	esac
+	echo "$arch"
+}
+
+get_v1_os() {
   os=$(uname -s)
   if [[ ! "$os" =~ (Darwin|Linux) ]]; then fail "The os (${os}) is not supported by this installation script."; fi
   echo "$os"
 }
 
-get_arch() {
+get_v1_arch() {
   arch=$(uname -m)
   if [[ ! "$arch" =~ (x86_64|arm64) ]]; then fail "The architecture (${arch}) is not supported by this installation script."; fi
   echo "$arch"
@@ -50,9 +70,15 @@ download_release() {
   version="$1"
   filename="$2"
 
-  arch=$(get_arch)
-  os=$(get_os)
-  url="$GH_REPO/releases/download/v${version}/teller_${version}_${os}_${arch}.tar.gz"
+  if [[ $version =~ ^1 ]]; then
+    arch=$(get_v1_arch)
+    os=$(get_v1_os)
+    url="$GH_REPO/releases/download/v${version}/teller_${version}_${os}_${arch}.tar.gz"
+  else
+    arch=$(get_arch)
+    os=$(get_os)
+    url="$GH_REPO/releases/download/v${version}/teller-${arch}-${os}.tar.xz"
+  fi
 
   echo "* Downloading $TOOL_NAME release $version..."
   curl "${curl_opts[@]}" -o "$filename" -C - "$url" || fail "Could not download $url"

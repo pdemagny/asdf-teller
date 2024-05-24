@@ -10,13 +10,25 @@ source "${plugin_dir}/lib/utils.bash"
 
 mkdir -p "$ASDF_DOWNLOAD_PATH"
 
-release_file="$ASDF_DOWNLOAD_PATH/$TOOL_NAME-$ASDF_INSTALL_VERSION.tar.gz"
+if [[ $ASDF_INSTALL_VERSION =~ ^1 ]]; then
+    RELEASE_FILE_EXT=gz
+    EXTRACT_ARGUMENTS=-xzf
+else
+    RELEASE_FILE_EXT=xz
+    EXTRACT_ARGUMENTS=-xf
+fi
 
-# Download tar.gz file to the download directory
+release_file="$ASDF_DOWNLOAD_PATH/$TOOL_NAME-$ASDF_INSTALL_VERSION.tar.$RELEASE_FILE_EXT"
+
+# Download release file to the download directory
 download_release "$ASDF_INSTALL_VERSION" "$release_file"
 
-#  Extract contents of tar.gz file into the download directory
-tar -xzf "$release_file" -C "$ASDF_DOWNLOAD_PATH" || fail "Could not extract $release_file"
+#  Extract contents of release file into the download directory
+if [[ $ASDF_INSTALL_VERSION =~ ^1 ]]; then
+    tar "$EXTRACT_ARGUMENTS" "$release_file" -C "$ASDF_DOWNLOAD_PATH" || fail "Could not extract $release_file"
+else
+    tar "$EXTRACT_ARGUMENTS" "$release_file" -C "$ASDF_DOWNLOAD_PATH" --strip-components=1 || fail "Could not extract $release_file"
+fi
 
-# Remove the tar.gz file since we don't need to keep it
+# Remove the release file since we don't need to keep it
 rm "$release_file"
